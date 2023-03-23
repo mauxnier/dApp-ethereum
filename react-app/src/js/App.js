@@ -1,17 +1,15 @@
 import React, {useState, useEffect } from 'react';
 import {TextField , Button } from '@mui/material';
 import Task from './Task';
-import './App.css';
+import '../css/App.css';
 
 import { TaskContractAddress } from './config.js';
 import {ethers} from 'ethers';
-import TaskAbi from './utils/TaskContract.json'
-
-const greeterAddress = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'; // l'adresse du contrat déployé
+import TaskAbi from '../artifacts/contracts/TaskContract.sol/TaskContract.json'
 
 function App() {
-  const [tasks,setTasks]=useState([]);
-  const [input, setInput]=useState('');
+  const [tasks, setTasks] = useState([]);
+  const [input, setInput] = useState('');
   const [currentAccount, setCurrentAccount] = useState('');
   const [correctNetwork, setCorrectNetwork] = useState(false);
   
