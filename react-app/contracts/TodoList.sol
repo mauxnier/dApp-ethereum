@@ -1,34 +1,58 @@
-pragma solidity ^0.8.0;
+// SPDX-License-Identifier: GPL-3.0
 
-contract TodoList {
-    uint public taskCount = 0;
+pragma solidity 0.8.4;
+/**
+ * @title Todo list Contract
+ * @dev This contract is used to manage tasks
+ */
+contract TaskContract {
+
+    event AddTask(address recipient, uint taskId);
+    event DeleteTask(uint taskId, bool isDeleted);
 
     struct Task {
         uint id;
-        string content;
-        bool completed;
+        address username;
+        string taskText;
+        bool isDeleted;
     }
 
-    mapping(uint => Task) public tasks;
+    Task[] private tasks;
 
-    event TaskCreated(uint id, string content, bool completed);
-    event TaskCompleted(uint id, bool completed);
+    // Mapping of Task id to the wallet address of the user
+    mapping(uint256 => address) taskToOwner;
 
-    constructor() {
-        createTask("Create your first task!");
+    // Method to be called by our frontend when trying to add a new Task
+    function addTask(string memory taskText, bool isDeleted) external {
+        uint taskId = tasks.length;
+        tasks.push(Task(taskId, msg.sender, taskText, isDeleted));
+        taskToOwner[taskId] = msg.sender;
+        emit AddTask(msg.sender, taskId);
     }
 
-    function createTask(string memory _content) public {
-        taskCount ++;
-        tasks[taskCount] = Task(taskCount, _content, false);
-        emit TaskCreated(taskCount, _content, false);
+    // Method to get only your Tasks
+    function getMyTasks() external view returns (Task[] memory) {
+        Task[] memory temporary = new Task[](tasks.length);
+        uint counter = 0;
+        for(uint i=0; i<tasks.length; i++) {
+            if(taskToOwner[i] == msg.sender && tasks[i].isDeleted == false) {
+                temporary[counter] = tasks[i];
+                counter++;
+            }
+        }
+
+        Task[] memory result = new Task[](counter);
+        for(uint i=0; i<counter; i++) {
+            result[i] = temporary[i];
+        }
+        return result;
     }
 
-    function toggleCompleted(uint _id) public {
-        Task memory _task = tasks[_id];
-        _task.completed = !_task.completed;
-        tasks[_id] = _task;
-        emit TaskCompleted(_id, _task.completed);
+    // Method to Delete a Task
+    function deleteTask(uint taskId, bool isDeleted) external {
+        if(taskToOwner[taskId] == msg.sender) {
+            tasks[taskId].isDeleted = isDeleted;
+            emit DeleteTask(taskId, isDeleted);
+        }
     }
 }
-
