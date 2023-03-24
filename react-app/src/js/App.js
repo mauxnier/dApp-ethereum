@@ -40,7 +40,7 @@ function App() {
       getAllTasks()
     },[]);
     
-    // Calls Metamask to connect wallet on clicking Connect Wallet button
+  // Calls Metamask to connect wallet on clicking Connect Wallet button
   const connectWallet = async () => {
     try {
       const { ethereum } = window
@@ -52,10 +52,10 @@ function App() {
       let chainId = await ethereum.request({ method: 'eth_chainId'})
       console.log('Connected to chain:' + chainId)
 
-      const rinkebyChainId = '0x539'
+      const localhostChainId = '0x539'
 
-      if (chainId !== rinkebyChainId) {
-        alert('You are not connected to the Rinkeby Testnet!')
+      if (chainId !== localhostChainId) {
+        alert('You are not connected to the Localhost:8545 Testnet!')
         return
       } else {
         setCorrectNetwork(true);
