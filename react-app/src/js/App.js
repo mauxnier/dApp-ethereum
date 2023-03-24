@@ -167,11 +167,11 @@ function App() {
 			) : correctNetwork ? (
 				<div className="App">
 					<h2> Todo List DApp</h2>
-          <h3> <span class="connected"></span> Connecté au compte : {currentAccount}</h3>
-          <form>
-            <TextField id="outlined-basic" label="Ajouter une tâche" variant="outlined" style={{margin:"0px 5px"}} size="small" value={input} onChange={e=>setInput(e.target.value)} />
-            <Button variant="contained" color="primary" onClick={addTask}>Add</Button>
-          </form>
+					<h3><span class="connected"></span> Connecté au compte : {currentAccount}</h3>
+					<form>
+						<TextField id="outlined-basic" label="Ajouter une tâche" variant="outlined" style={{margin:"0px 5px"}} size="small" value={input} onChange={e=>setInput(e.target.value)} />
+						<Button variant="contained" color="primary" onClick={addTask}>Add</Button>
+					</form>
 					<ul>
 						{tasks.map(item =>
 							<Task
