@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Todo List DApp",
+  "name": "An ethereum DApp to manage your todo list",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,7 +8,7 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo.png",
+      "src": "img/logo.png",
       "type": "image/png",
       "sizes": "512x512"
     }

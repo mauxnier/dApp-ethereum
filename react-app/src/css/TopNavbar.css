@@ -1,0 +1,30 @@
+.top-nav {
+    background-color: #0e7bc5;
+    width: 100%;
+}
+
+.top-nav .nav-link {
+    color: white !important;
+}
+
+.top-nav .nav-link:hover {
+    border-bottom: 2px solid white;
+}
+
+.top-nav .menu-list {
+    justify-content: flex-end;
+}
+
+.top-nav .navbar-brand {
+    float: left;
+}
+
+.top-nav .navbar-brand {
+    color: white !important;
+}
+
+#logo {
+    width: 30px;
+    height: 30px;
+    margin-right: 10px;
+}
