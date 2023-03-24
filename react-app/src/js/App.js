@@ -50,7 +50,6 @@ function App() {
 
 	/**
 	 * Appel de Metamask pour se connecter au portefeuille en cliquant sur le bouton Connect Wallet
-	 * @returns 
 	 */
 	const connectWallet = async () => {
 		try {
@@ -83,7 +82,7 @@ function App() {
 
 	/**
 	 * Ajout d'une tâche
-	 * @param {*} e 
+	 * @param {*} e événement
 	 */
 	const addTask = async (e) => {
 		e.preventDefault();
@@ -127,7 +126,6 @@ function App() {
 	/**
 	 * Suppression d'une tâche
 	 * @param {*} key clé de la tâche à supprimer
-	 * @returns
 	 */
 	const deleteTask = key => async () => {
 		console.log(key);
@@ -164,7 +162,7 @@ function App() {
 					className='text-2xl font-bold py-3 px-12 bg-[#f1c232] rounded-lg mb-10 hover:scale-105 transition duration-500 ease-in-out'
 					onClick={connectWallet}
 				>
-					Connect Wallet
+					Connect ETH Wallet
 				</button>
 			) : correctNetwork ? (
 				<div className="App">
@@ -186,7 +184,7 @@ function App() {
 			) : (
 				<div className='flex flex-col justify-center items-center mb-20 font-bold text-2xl gap-y-3'>
 					<div>----------------------------------------</div>
-					<div>Please connect to the Rinkeby Testnet</div>
+					<div>Please connect to the Localhost:8545 Testnet</div>
 					<div>and reload the page</div>
 					<div>----------------------------------------</div>
 				</div>
