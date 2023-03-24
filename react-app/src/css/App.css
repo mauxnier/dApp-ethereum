@@ -6,3 +6,71 @@
   border: 1px solid lightgray;
   margin-bottom: 10px !important;
 }
+.connected {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: green;
+  margin-left: 5px;
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+h2 {
+  margin-bottom: 20px;
+}
+
+h2 i.eth {
+  font-size: 1.2em;
+  margin-left: 10px;
+}
+
+h3 {
+  margin-top: 0px;
+}
+
+.connected {
+  color: green;
+}
+
+form {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+form .MuiFormControl-root {
+  margin: 0px 5px;
+}
+
+ul {
+  list-style: none;
+  padding-left: 0px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+
+.Task {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.Task p {
+  margin: 0px;
+  margin-left: 10px;
+}
+
+.Task button {
+  margin-left: auto;
+}
+

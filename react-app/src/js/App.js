@@ -148,10 +148,11 @@ function App() {
   </button>
   ) : correctNetwork ? (
     <div className="App">
-      <h2> Task Management App</h2>
+      <h2> Todo List DApp <i class="eth"></i></h2>
+      <h3> <span class="connected"></span> Connecté au compte : {currentAccount}</h3>
       <form>
-        <TextField id="outlined-basic" label="Make Todo" variant="outlined" style={{margin:"0px 5px"}} size="small" value={input} onChange={e=>setInput(e.target.value)} />
-        <Button variant="contained" color="primary" onClick={addTask}>Add Task</Button>
+        <TextField id="outlined-basic" label="Ajouter une tâche" variant="outlined" style={{margin:"0px 5px"}} size="small" value={input} onChange={e=>setInput(e.target.value)} />
+        <Button variant="contained" color="primary" onClick={addTask}>Add</Button>
       </form>
       <ul>
           {tasks.map(item=> 
@@ -166,7 +167,7 @@ function App() {
   ) : (
   <div className='flex flex-col justify-center items-center mb-20 font-bold text-2xl gap-y-3'>
   <div>----------------------------------------</div>
-  <div>Please connect to the Rinkeby Testnet</div>
+  <div>Please connect to the Local Testnet</div>
   <div>and reload the page</div>
   <div>----------------------------------------</div>
   </div>
