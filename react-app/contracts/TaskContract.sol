@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
  * @dev This contract is used to manage tasks
  */
 contract TaskContract {
-    event AddTask(address recipient, uint taskId);
+	event AddTask(address recipient, uint taskId);
     event DeleteTask(uint taskId, bool isDeleted);
 
     struct Task {
