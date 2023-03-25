@@ -2,17 +2,18 @@ import React from 'react';
 import Cookies from 'js-cookie';
 import { ethers } from 'ethers';
 import { TextField, Button } from '@mui/material';
+import { Navbar, Nav } from 'react-bootstrap';
 import TaskAbi from '../artifacts/contracts/TaskContract.sol/TaskContract.json';
+import { TaskContractAddress } from './config.js';
 import Task from './Task';
 import '../css/App.css';
-import TopNavbar from './TopNavbar.js';
+import '../css/TopNavbar.css';
+
 
 /**
  * Composant principal de l'application
  */
 class App extends React.Component {
-
-	TaskContractAddress = Cookies.get('contract_address');
 
 	constructor(props) {
 		super(props);
@@ -23,7 +24,6 @@ class App extends React.Component {
 			correctNetwork: false,
 			contractAddress: '',
 		};
-		this.connectWallet = this.connectWallet.bind(this);
 	}
 
 	/**
@@ -101,12 +101,12 @@ class App extends React.Component {
 			console.log('Found account address by cookie: ', accountAddress);
 			this.setState({ currentAccount: accountAddress });
 
-			const contractAddress = Cookies.get('contract_address');
-			if (contractAddress === undefined || contractAddress == '') {
-				console.log('No contract address found in cookie, please deploy the contract');
-				return;
-			}
-			this.setState({ contractAddress: contractAddress });
+			// const contractAddress = Cookies.get('contract_address');
+			// if (contractAddress === undefined || contractAddress == '') {
+			// 	console.log('No contract address found in cookie, please deploy the contract');
+			// 	return;
+			// }
+			// this.setState({ contractAddress: contractAddress });
 		} catch (error) {
 			console.log('Error connecting to metamask: ', error)
 		}
@@ -123,6 +123,7 @@ class App extends React.Component {
 				const provider = new ethers.providers.Web3Provider(ethereum);
 				const signer = provider.getSigner();
 				const TaskContract = new ethers.Contract(
+					// this.state.contractAddress,
 					TaskContractAddress,
 					TaskAbi.abi,
 					signer
@@ -157,6 +158,7 @@ class App extends React.Component {
 				const provider = new ethers.providers.Web3Provider(ethereum);
 				const signer = provider.getSigner();
 				const TaskContract = new ethers.Contract(
+					// this.state.contractAddress,
 					TaskContractAddress,
 					TaskAbi.abi,
 					signer
@@ -196,6 +198,7 @@ class App extends React.Component {
 				const provider = new ethers.providers.Web3Provider(ethereum);
 				const signer = provider.getSigner();
 				const TaskContract = new ethers.Contract(
+					// this.state.contractAddress,
 					TaskContractAddress,
 					TaskAbi.abi,
 					signer
@@ -213,6 +216,25 @@ class App extends React.Component {
 	};
 
 	/**
+	* Permet de se déconnecter du portefeuille Metamask en supprimant le cookie
+	*/
+	handleDisconnect = async () => {
+		console.log("Déconnexion du portefeuille Metamask");
+		Cookies.remove('account_address');
+		window.location.reload();
+	}
+
+	/**
+	 * Permet de changer de portefeuille Metamask en supprimant le cookie et en appelant la fonction connectWallet()
+	 */
+	handleWallet = async () => {
+		console.log("Changement de portefeuille");
+		//TODO modifier
+		this.connectWallet();
+		window.location.reload();
+	}
+
+	/**
 	 * Fonction de rendu du composant
 	 * @returns {JSX.Element}
 	 */
@@ -220,11 +242,33 @@ class App extends React.Component {
 		const { input, tasks, currentAccount, correctNetwork } = this.state;
 		return (
 			<div>
-				<TopNavbar connectWallet={this.connectWallet} />
+				<Navbar collapseOnSelect expand="lg" className="top-nav">
+					<div className="container">
+						<Navbar.Brand>
+							<img id="logo" src="/img/logo.png" alt="Logo"></img>
+							Todo List DApp
+						</Navbar.Brand>
+						<Navbar.Toggle aria-controls="responsive-navbar-nav" />
+						<Navbar.Collapse id="responsive-navbar-nav" className="menu-list">
+							<Nav >
+								{/* <Nav.Link href="#features">Features</Nav.Link> */}
+								<Nav.Link onClick={this.handleWallet}>Changer de portefeuille</Nav.Link>
+								<Nav.Link onClick={this.handleDisconnect}>Déconnexion</Nav.Link>
+								{/* <NavDropdown title="Dropdown" id="collasible-nav-dropdown">
+											<NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
+											<NavDropdown.Item href="">Another action</NavDropdown.Item>
+											<NavDropdown.Item href="#action/3.3">Something</NavDropdown.Item>
+											<NavDropdown.Divider />
+											<NavDropdown.Item href="">Separated link</NavDropdown.Item>
+										</NavDropdown> */}
+							</Nav>
+						</Navbar.Collapse>
+					</div>
+				</Navbar>
 				{(currentAccount !== '') && correctNetwork ? (
 					<div className="App">
 						<h3><span className="connected"></span> Connecté au compte : {currentAccount}</h3>
-						<h4>Contrat déployé : {TaskContractAddress}</h4>
+						{/* <h4>Contrat déployé : {this.state.contractAddress}</h4> */}
 						<form>
 							<TextField id="outlined-basic" label="Ajouter une tâche" variant="outlined" style={{ margin: "0px 5px" }} size="small" value={input} onChange={e => this.setState({ input: e.target.value })} />
 							<Button variant="contained" color="primary" onClick={this.addTask}>Add</Button>

@@ -7,6 +7,7 @@ import reportWebVitals from './js/reportWebVitals';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
 	<div>
+		{/* <TopNavbar /> */}
 		<App />
 	</div>
 );

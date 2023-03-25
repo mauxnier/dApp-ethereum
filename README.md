@@ -10,6 +10,8 @@
 ## Installation DANS ./react-app
 
 `npm install @mui/material @mui/icons-material @emotion/react @emotion/styled`
+`npm install js-cookie` (pour les cookies)
+`npm install react-bootstrap` (pour bootstrap)
 
 ## Lancement
 
