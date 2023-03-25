@@ -6,8 +6,8 @@
   margin: 20px;
 }
 
-.todo__list{
-  display:flex;
+.todo__list {
+  display: flex;
   justify-content: center;
   align-items: center;
   width: 800px;
@@ -15,13 +15,39 @@
   margin-bottom: 10px !important;
 }
 
+.status-indicator {
+  position: absolute;
+  top: 15%;
+  left: 5%;
+  background-color: #d5ddff;
+  border: 2px solid #000b4b;
+  padding: 10px;
+  text-align: left;
+  border-radius: 10px;
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+}
+
 .connected {
   display: inline-block;
-  width: 10px;
-  height: 10px;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
   background-color: green;
-  margin-left: 5px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+.disconnected {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background-color: red;
+  margin-right: 5px;
+}
+
+.hidden {
+  display: none;
 }
 
 .Task {

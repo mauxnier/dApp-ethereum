@@ -3,12 +3,14 @@ import Cookies from 'js-cookie';
 import { ethers } from 'ethers';
 import { TextField, Button } from '@mui/material';
 import { Navbar, Nav } from 'react-bootstrap';
-import TaskAbi from '../artifacts/contracts/TaskContract.sol/TaskContract.json';
-import { TaskContractAddress } from './config.js';
+import TaskContractAbi from '../artifacts/contracts/TaskContract.sol/TaskContract.json';
+// import { TaskContractAddress } from './config.js';
 import Task from './Task';
 import '../css/App.css';
 import '../css/TopNavbar.css';
 
+
+// const hre = require("hardhat");
 
 /**
  * Composant principal de l'application
@@ -20,10 +22,15 @@ class App extends React.Component {
 		this.state = {
 			input: '',
 			tasks: [],
-			currentAccount: '',
 			correctNetwork: false,
+			showStatus: true,
+			accountAddress: '',
+			showAccountAddress: false,
 			contractAddress: '',
+			showContractAddress: false,
 		};
+		this.toggleStatus = this.toggleStatus.bind(this);
+		this.handleShowAccountAddress = this.handleShowAccountAddress.bind(this);
 	}
 
 	/**
@@ -31,7 +38,7 @@ class App extends React.Component {
 	 */
 	componentDidMount() {
 		this.connectWalletByCookie();
-		if (this.state.currentAccount !== '') {
+		if (this.state.accountAddress !== '') {
 			this.getAllTasks();
 		}
 	}
@@ -61,9 +68,9 @@ class App extends React.Component {
 
 			const accounts = await ethereum.request({ method: 'eth_requestAccounts' })
 
-			console.log('Added account address to cookie: ', accounts[0]);
-			this.setState({ currentAccount: accounts[0] });
+			this.setState({ accountAddress: accounts[0] });
 			Cookies.set('account_address', accounts[0], { expires: 7 });
+			console.log('Added account address to cookie: ', accounts[0]);
 		} catch (error) {
 			console.log('Error connecting to metamask: ', error)
 		}
@@ -99,14 +106,15 @@ class App extends React.Component {
 				return;
 			}
 			console.log('Found account address by cookie: ', accountAddress);
-			this.setState({ currentAccount: accountAddress });
+			this.setState({ accountAddress: accountAddress });
 
-			// const contractAddress = Cookies.get('contract_address');
-			// if (contractAddress === undefined || contractAddress == '') {
-			// 	console.log('No contract address found in cookie, please deploy the contract');
-			// 	return;
-			// }
-			// this.setState({ contractAddress: contractAddress });
+			const contractAddress = Cookies.get('contract_address');
+			if (contractAddress === undefined || contractAddress == '') {
+				console.log('No contract address found in cookie, please deploy the contract');
+				return;
+			}
+			console.log('Found contract address by cookie: ', contractAddress);
+			this.setState({ contractAddress: contractAddress });
 		} catch (error) {
 			console.log('Error connecting to metamask: ', error)
 		}
@@ -123,9 +131,9 @@ class App extends React.Component {
 				const provider = new ethers.providers.Web3Provider(ethereum);
 				const signer = provider.getSigner();
 				const TaskContract = new ethers.Contract(
-					// this.state.contractAddress,
-					TaskContractAddress,
-					TaskAbi.abi,
+					this.state.contractAddress,
+					// TaskContractAddress,
+					TaskContractAbi.abi,
 					signer
 				)
 
@@ -158,9 +166,9 @@ class App extends React.Component {
 				const provider = new ethers.providers.Web3Provider(ethereum);
 				const signer = provider.getSigner();
 				const TaskContract = new ethers.Contract(
-					// this.state.contractAddress,
-					TaskContractAddress,
-					TaskAbi.abi,
+					this.state.contractAddress,
+					// TaskContractAddress,
+					TaskContractAbi.abi,
 					signer
 				);
 
@@ -198,9 +206,9 @@ class App extends React.Component {
 				const provider = new ethers.providers.Web3Provider(ethereum);
 				const signer = provider.getSigner();
 				const TaskContract = new ethers.Contract(
-					// this.state.contractAddress,
-					TaskContractAddress,
-					TaskAbi.abi,
+					this.state.contractAddress,
+					// TaskContractAddress,
+					TaskContractAbi.abi,
 					signer
 				);
 				await TaskContract.deleteTask(key, true);
@@ -231,7 +239,65 @@ class App extends React.Component {
 		console.log("Changement de portefeuille");
 		//TODO modifier
 		this.connectWallet();
-		window.location.reload();
+		// window.location.reload();
+	}
+
+	/**
+	 * Permet de déployer le contrat sur la blockchain
+	 */
+	// deployContract = async () => {
+	// const Contract = await hre.ethers.getContractFactory("TaskContract");
+	// const contract = await Contract.deploy();
+	// await contract.deployed();
+	// console.log("Contract deployed to:", contract.address);
+	// // Mise en cookie de l'adresse du contrat déployé
+	// Cookies.set('contract_address', contract.address);
+	// }
+
+	deployContract = async () => {
+		// create an ethers.js provider object connected to the current network
+		const provider = new ethers.providers.Web3Provider(window.ethereum);
+
+		// request access to the user's MetaMask account
+		await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+		// get the signer (account) from the provider
+		const signer = provider.getSigner();
+
+		// get the contract factory
+		const contractFactory = new ethers.ContractFactory(
+			TaskContractAbi.abi,
+			TaskContractAbi.bytecode,
+			signer
+		);
+
+		// deploy the contract
+		const contract = await contractFactory.deploy();
+
+		// wait for the contract to be mined
+		await contract.deployed();
+
+		Cookies.set('contract_address', contract.address);
+		this.setState({ contractAddress: contract.address });
+		console.log('TaskContract deployed to:', contract.address);
+	}
+
+	/**
+	 * Affiche ou non l'adresse du portefeuille connecté
+	 */
+	handleShowAccountAddress() {
+		this.setState({
+			showAccountAddress: !this.state.showAccountAddress
+		});
+	}
+
+	/**
+	 * Affiche ou non le statut de la connexion au réseau Ethereum
+	 */
+	toggleStatus() {
+		this.setState({
+			showStatus: !this.state.showStatus
+		});
 	}
 
 	/**
@@ -239,7 +305,8 @@ class App extends React.Component {
 	 * @returns {JSX.Element}
 	 */
 	render() {
-		const { input, tasks, currentAccount, correctNetwork } = this.state;
+		const { input, tasks, accountAddress, correctNetwork } = this.state;
+		const statusClass = this.state.showStatus ? "status-indicator" : "status-indicator hidden";
 		return (
 			<div>
 				<Navbar collapseOnSelect expand="lg" className="top-nav">
@@ -250,8 +317,9 @@ class App extends React.Component {
 						</Navbar.Brand>
 						<Navbar.Toggle aria-controls="responsive-navbar-nav" />
 						<Navbar.Collapse id="responsive-navbar-nav" className="menu-list">
-							<Nav >
-								{/* <Nav.Link href="#features">Features</Nav.Link> */}
+							<Nav>
+								<Nav.Link onClick={this.toggleStatus}>Afficher le statut</Nav.Link>
+								<Nav.Link onClick={this.deployContract}>Déployer le contrat</Nav.Link>
 								<Nav.Link onClick={this.handleWallet}>Changer de portefeuille</Nav.Link>
 								<Nav.Link onClick={this.handleDisconnect}>Déconnexion</Nav.Link>
 								{/* <NavDropdown title="Dropdown" id="collasible-nav-dropdown">
@@ -265,10 +333,27 @@ class App extends React.Component {
 						</Navbar.Collapse>
 					</div>
 				</Navbar>
-				{(currentAccount !== '') && correctNetwork ? (
+				{(accountAddress !== '') && correctNetwork ? (
 					<div className="App">
-						<h3><span className="connected"></span> Connecté au compte : {currentAccount}</h3>
-						{/* <h4>Contrat déployé : {this.state.contractAddress}</h4> */}
+						<h2>Get Things Done</h2>
+						<div className={statusClass}>
+							<h6>
+								<span
+									className="connected"
+									onClick={this.handleShowAccountAddress}
+								></span>Compte connecté
+
+							</h6>
+							{this.state.showAccountAddress && (
+								<p>Adresse : {accountAddress}</p>
+							)}
+							{this.state.contractAddress !== '' ? (
+								<h6><span className="connected"></span>Contrat déployé</h6>
+							) : (
+								<h6><span className="disconnected"></span>Contrat non-déployé</h6>
+							)}
+						</div>
+
 						<form>
 							<TextField id="outlined-basic" label="Ajouter une tâche" variant="outlined" style={{ margin: "0px 5px" }} size="small" value={input} onChange={e => this.setState({ input: e.target.value })} />
 							<Button variant="contained" color="primary" onClick={this.addTask}>Add</Button>
