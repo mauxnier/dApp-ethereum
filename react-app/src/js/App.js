@@ -100,15 +100,12 @@ class App extends React.Component {
 					this.setState({ accountAddress: accounts[0] }, () => {
 						console.log('Added account address to state: ', this.state.accountAddress);
 
-						// Ajout de l'adresse du portefeuille sélectionné dans le cookie 
-						this.setSelectedAccountToCookie(this.state.accountAddress);
+						// Ajout de l'adresse du portefeuille sélectionné dans le cookie et récupération des tâches
+						this.setSelectedAccount(this.state.accountAddress);
 						console.log('Add account address to cookie of selected account', this.state.accountAddress);
 
 						// Ajout de l'adresse du portefeuille dans la liste des cookies si il n'y est pas déjà
 						this.addAccountToCookieList(this.state.accountAddress);
-
-						// Récupération des tâches
-						this.getAllTasks(this.state.contractAddress, this.state.accountAddress);
 					});
 				} else {
 					return;
@@ -293,7 +290,7 @@ class App extends React.Component {
 	 */
 	toggleChangeWalletPopup = () => {
 		const popup = document.querySelector('.popup');
-		popup.removeAttribute('hidden');
+		popup.toggleAttribute('hidden');
 	}
 
 	/**
@@ -323,9 +320,11 @@ class App extends React.Component {
 			const button = document.createElement('button');
 			button.textContent = accountList[i];
 			button.className = 'account-address';
+			button.onclick = this.setSelectedAccount.bind(this, accountList[i]);
 			li.appendChild(button);
 			accountListElement.appendChild(li);
 		}
+
 	}
 
 	/**
@@ -335,7 +334,7 @@ class App extends React.Component {
 		console.log("Déconnexion du portefeuille Metamask");
 
 		this.setState({ connectAccount: false }, () => {
-			this.removeSelectedCookie();
+			this.removeSelectedAccountCookie();
 			// this.removeAccountFromCookieList(this.state.accountAddress);
 			this.setState({ accountAddress: '' });
 		});
@@ -354,14 +353,18 @@ class App extends React.Component {
 	 * Ajoute l'adresse du portefeuille Metamask sélectionné dans le cookie
 	 * @param {*} selectedAccount portefeuille sélectionné
 	 */
-	setSelectedAccountToCookie = (selectedAccount) => {
+	setSelectedAccount = (selectedAccount) => {
 		Cookies.set('selected_account', selectedAccount, { expires: 7 });
+		this.setState({ accountAddress: selectedAccount }, () => {
+			this.toggleChangeWalletPopup();
+			this.getAllTasks(this.state.contractAddress, this.state.accountAddress);
+		});
 	}
 
 	/**
 	 * Supprime le cookie de l'adresse du portefeuille Metamask sélectionné
 	 */
-	removeSelectedCookie = () => {
+	removeSelectedAccountCookie = () => {
 		Cookies.remove('selected_account');
 	}
 
