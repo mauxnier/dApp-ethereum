@@ -42,7 +42,7 @@
 }
 
 .walletButton {
-  font-size: 0.75rem;
+  font-size: 1rem;
   font-weight: bold;
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
@@ -62,8 +62,8 @@
   display: inline-block;
   vertical-align: middle;
   margin-right: 0.5rem;
-  width: 2rem;
-  height: 2rem;
+  width: 4rem;
+  height: 4rem;
 }
 
 .flex-container {

@@ -101,11 +101,14 @@ class App extends React.Component {
 						console.log('Added account address to state: ', this.state.accountAddress);
 
 						// Ajout de l'adresse du portefeuille sélectionné dans le cookie et récupération des tâches
-						this.setSelectedAccount(this.state.accountAddress);
+						this.setSelectedAccountToCookie(this.state.accountAddress);
 						console.log('Add account address to cookie of selected account', this.state.accountAddress);
 
 						// Ajout de l'adresse du portefeuille dans la liste des cookies si il n'y est pas déjà
 						this.addAccountToCookieList(this.state.accountAddress);
+
+						// Récupération des tâches
+						this.getAllTasks(this.state.contractAddress, this.state.accountAddress);
 					});
 				} else {
 					return;
@@ -286,26 +289,18 @@ class App extends React.Component {
 	}
 
 	/**
-	 * Permet d'afficher la popup de changement de portefeuille
-	 */
-	toggleChangeWalletPopup = () => {
-		const popup = document.querySelector('.popup');
-		popup.toggleAttribute('hidden');
-	}
-
-	/**
 	 * Permet de gérer la popup de changement de portefeuille
 	 */
 	handleChangeWallet = async () => {
 		console.log("Changement de portefeuille");
 
+		// fermer la popup
 		const popup = document.querySelector('.popup');
-		const closeButton = document.querySelector('.close-popup');
-
 		popup.setAttribute('hidden', true);
 
+		const closeButton = document.querySelector('.close-popup');
 		closeButton.addEventListener('click', () => {
-			popup.setAttribute('hidden', true);
+			this.toggleChangeWalletPopup();
 		});
 
 		// récupérer la liste d'adresses de compte depuis le cookie
@@ -350,15 +345,23 @@ class App extends React.Component {
 	}
 
 	/**
-	 * Ajoute l'adresse du portefeuille Metamask sélectionné dans le cookie
+	 * Ajoute l'adresse du portefeuille Metamask sélectionné
 	 * @param {*} selectedAccount portefeuille sélectionné
 	 */
 	setSelectedAccount = (selectedAccount) => {
-		Cookies.set('selected_account', selectedAccount, { expires: 7 });
+		this.setSelectedAccountToCookie(selectedAccount);
 		this.setState({ accountAddress: selectedAccount }, () => {
 			this.toggleChangeWalletPopup();
 			this.getAllTasks(this.state.contractAddress, this.state.accountAddress);
 		});
+	}
+
+	/**
+	 * Ajoute l'adresse du portefeuille Metamask sélectionné dans le cookie
+	 * @param {*} selectedAccount portefeuille sélectionné
+	 */
+	setSelectedAccountToCookie = (selectedAccount) => {
+		Cookies.set('selected_account', selectedAccount, { expires: 7 });
 	}
 
 	/**
@@ -410,6 +413,15 @@ class App extends React.Component {
 	};
 
 	/**
+	 * Permet de se connecter à un portefeuille Metamask
+	 */
+	handleConnectAccount() {
+		this.setState({ connectAccount: true }, () => {
+			this.connectWallet();
+		});
+	}
+
+	/**
 	 * Affiche ou non l'adresse du portefeuille connecté
 	 */
 	handleShowAccountAddress() {
@@ -431,12 +443,11 @@ class App extends React.Component {
 	}
 
 	/**
-	 * Permet de se connecter à un portefeuille Metamask
+	 * Permet d'afficher la popup de changement de portefeuille
 	 */
-	handleConnectAccount() {
-		this.setState({ connectAccount: true }, () => {
-			this.connectWallet();
-		});
+	toggleChangeWalletPopup = () => {
+		const popup = document.querySelector('.popup');
+		popup.toggleAttribute('hidden');
 	}
 
 	/**
@@ -444,8 +455,8 @@ class App extends React.Component {
 	 * @returns {JSX.Element}
 	 */
 	render() {
-		const { input, tasks, correctNetwork, accountAddress, contractAddress } = this.state;
-		const statusClass = this.state.showStatus ? "status-indicator" : "status-indicator hidden";
+		const { input, tasks, correctNetwork, connectAccount, accountAddress, contractAddress, showStatus, showAccountAddress, showContractAddress } = this.state;
+		const statusClass = showStatus ? "status-indicator" : "status-indicator hidden";
 
 		return (
 			<div>
@@ -459,10 +470,16 @@ class App extends React.Component {
 						<Navbar.Collapse id="responsive-navbar-nav" className="menu-list">
 							<Nav>
 								<Nav.Link onClick={this.toggleStatus}>Afficher le statut</Nav.Link>
-								<Nav.Link onClick={this.deployContract}>Déployer le contrat</Nav.Link>
-								<Nav.Link onClick={this.toggleChangeWalletPopup}>Changer de portefeuille</Nav.Link>
-								{/* <Nav.Link onClick={this.connectWallet}>Connexion</Nav.Link> */}
-								<Nav.Link onClick={this.handleDisconnect}>Déconnexion</Nav.Link>
+								{connectAccount ? (
+									<>
+										<Nav.Link onClick={this.toggleStatus}>Afficher le statut</Nav.Link>
+										<Nav.Link onClick={this.deployContract}>Déployer le contrat</Nav.Link>
+										<Nav.Link onClick={this.toggleChangeWalletPopup}>Changer de portefeuille</Nav.Link>
+										<Nav.Link onClick={this.handleDisconnect}>Déconnexion</Nav.Link>
+									</>
+								) : (
+									<Nav.Link onClick={this.handleConnectAccount}>Connexion</Nav.Link>
+								)}
 							</Nav>
 						</Navbar.Collapse>
 					</div>
@@ -476,23 +493,20 @@ class App extends React.Component {
 					<button className="close-popup">X</button>
 				</div>
 				<div className={statusClass}>
-					{this.state.accountAddress !== '' ? (
+					{accountAddress !== '' ? (
 						<h6><span className="connected" onClick={this.handleShowAccountAddress}></span>Compte connecté</h6>
 					) : (
 						<h6><span className="disconnected"></span>Compte non-connecté</h6>
 					)}
-					{this.state.showAccountAddress && (
-						<p>Adresse : {accountAddress}</p>
-					)}
+					{showAccountAddress && accountAddress !== '' && <p>Adresse : {accountAddress}</p>}
 
-					{this.state.contractAddress !== '' ? (
+
+					{contractAddress !== '' ? (
 						<h6><span className="connected" onClick={this.handleShowContractAddress}></span>Contrat déployé</h6>
 					) : (
 						<h6><span className="disconnected"></span>Contrat non-déployé</h6>
 					)}
-					{this.state.showContractAddress && (
-						<p>Adresse : {contractAddress}</p>
-					)}
+					{showContractAddress && contractAddress !== '' && <p>Adresse : {contractAddress}</p>}
 				</div>
 				{(accountAddress !== '') && correctNetwork ? (
 					<div className="App">
