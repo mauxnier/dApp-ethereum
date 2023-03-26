@@ -7,6 +7,11 @@ pragma solidity ^0.8.0;
  * @dev This contract is used to manage tasks
  */
 contract TaskContract {
+
+    function getName() public pure returns (string memory) {
+        return "TaskContract";
+    }
+
 	event AddTask(address recipient, uint taskId);
     event DeleteTask(uint taskId, bool isDeleted);
 

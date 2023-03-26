@@ -39,6 +39,7 @@ class App extends React.Component {
 	 */
 	componentDidMount() {
 		this.connectWalletByCookie();
+		this.handleContractAddressCookie();
 		if (this.state.accountAddress !== '') {
 			this.getAllTasks();
 		}
@@ -108,14 +109,6 @@ class App extends React.Component {
 			}
 			console.log('Found account address by cookie: ', accountAddress);
 			this.setState({ accountAddress: accountAddress });
-
-			const contractAddress = Cookies.get('contract_address');
-			if (contractAddress === undefined || contractAddress === '') {
-				console.log('No contract address found in cookie, please deploy the contract');
-				return;
-			}
-			console.log('Found contract address by cookie: ', contractAddress);
-			this.setState({ contractAddress: contractAddress });
 		} catch (error) {
 			console.log('Error connecting to metamask: ', error)
 		}
@@ -246,15 +239,6 @@ class App extends React.Component {
 	/**
 	 * Permet de déployer le contrat sur la blockchain
 	 */
-	// deployContract = async () => {
-	// const Contract = await hre.ethers.getContractFactory("TaskContract");
-	// const contract = await Contract.deploy();
-	// await contract.deployed();
-	// console.log("Contract deployed to:", contract.address);
-	// // Mise en cookie de l'adresse du contrat déployé
-	// Cookies.set('contract_address', contract.address);
-	// }
-
 	deployContract = async () => {
 		// create an ethers.js provider object connected to the current network
 		const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -281,6 +265,47 @@ class App extends React.Component {
 		Cookies.set('contract_address', contract.address);
 		this.setState({ contractAddress: contract.address });
 		console.log('TaskContract deployed to:', contract.address);
+	}
+
+	/**
+	 * Vérifie si le contrat est déployé
+	 * @returns true si le contrat est déployé, false sinon
+	 */
+	checkContractDeployment = async (contractAddress) => {
+		try {
+			// create an ethers.js provider object connected to the current network
+			const provider = new ethers.providers.Web3Provider(window.ethereum);
+
+			// get the contract instance using the contract address
+			const contract = new ethers.Contract(contractAddress, TaskContractAbi.abi, provider);
+
+			// call a function on the contract to check if it exists at the given address
+			const name = await contract.getName();
+			console.log('Verify contract name: ', name);
+			return name == 'TaskContract';
+		} catch (error) {
+			console.error('Erreur lors de la vérification du déploiement du contrat', error);
+			return false;
+		}
+	}
+
+	/**
+	 * Gère le cookie contenant l'adresse du contrat
+	 */
+	handleContractAddressCookie = async () => {
+		const contractAddress = Cookies.get('contract_address');
+		if (contractAddress === undefined || contractAddress === '') {
+			console.log('No contract address found in cookie, please deploy the contract');
+			return;
+		}
+		console.log('Found contract address by cookie (need to verify it): ', contractAddress);
+		if (await this.checkContractDeployment(contractAddress) == true) {
+			console.log('Contract address is verified at address: ', contractAddress);
+			this.setState({ contractAddress: contractAddress });
+		} else {
+			console.log('The contract address found in the cookie is not valid, please deploy the contract again (here is the cookie address): ', contractAddress);
+			this.setState({ contractAddress: '' });
+		}
 	}
 
 	/**
@@ -354,7 +379,7 @@ class App extends React.Component {
 					)}
 
 					{this.state.contractAddress !== '' ? (
-						<h6><span className="connected"onClick={this.handleShowContractAddress}></span>Contrat déployé</h6>
+						<h6><span className="connected" onClick={this.handleShowContractAddress}></span>Contrat déployé</h6>
 					) : (
 						<h6><span className="disconnected"></span>Contrat non-déployé</h6>
 					)}
