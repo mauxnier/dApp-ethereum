@@ -31,6 +31,7 @@ class App extends React.Component {
 		};
 		this.toggleStatus = this.toggleStatus.bind(this);
 		this.handleShowAccountAddress = this.handleShowAccountAddress.bind(this);
+		this.handleShowContractAddress = this.handleShowContractAddress.bind(this);
 	}
 
 	/**
@@ -101,7 +102,7 @@ class App extends React.Component {
 			}
 
 			const accountAddress = Cookies.get('account_address');
-			if (accountAddress === undefined || accountAddress == '') {
+			if (accountAddress === undefined || accountAddress === '') {
 				console.log('No account address found in cookie, please connect to Metamask');
 				return;
 			}
@@ -109,7 +110,7 @@ class App extends React.Component {
 			this.setState({ accountAddress: accountAddress });
 
 			const contractAddress = Cookies.get('contract_address');
-			if (contractAddress === undefined || contractAddress == '') {
+			if (contractAddress === undefined || contractAddress === '') {
 				console.log('No contract address found in cookie, please deploy the contract');
 				return;
 			}
@@ -292,6 +293,15 @@ class App extends React.Component {
 	}
 
 	/**
+	 * Affiche ou non l'adresse du contrat déployé
+	 */
+	handleShowContractAddress() {
+		this.setState({
+			showContractAddress: !this.state.showContractAddress
+		});
+	}
+
+	/**
 	 * Affiche ou non le statut de la connexion au réseau Ethereum
 	 */
 	toggleStatus() {
@@ -305,7 +315,7 @@ class App extends React.Component {
 	 * @returns {JSX.Element}
 	 */
 	render() {
-		const { input, tasks, accountAddress, correctNetwork } = this.state;
+		const { input, tasks, correctNetwork, accountAddress, contractAddress } = this.state;
 		const statusClass = this.state.showStatus ? "status-indicator" : "status-indicator hidden";
 		return (
 			<div>
@@ -333,30 +343,32 @@ class App extends React.Component {
 						</Navbar.Collapse>
 					</div>
 				</Navbar>
+				<div className={statusClass}>
+					{this.state.accountAddress !== '' ? (
+						<h6><span className="connected" onClick={this.handleShowAccountAddress}></span>Compte connecté</h6>
+					) : (
+						<h6><span className="disconnected"></span>Compte non-connecté</h6>
+					)}
+					{this.state.showAccountAddress && (
+						<p>Adresse : {accountAddress}</p>
+					)}
+
+					{this.state.contractAddress !== '' ? (
+						<h6><span className="connected"onClick={this.handleShowContractAddress}></span>Contrat déployé</h6>
+					) : (
+						<h6><span className="disconnected"></span>Contrat non-déployé</h6>
+					)}
+					{this.state.showContractAddress && (
+						<p>Adresse : {contractAddress}</p>
+					)}
+				</div>
 				{(accountAddress !== '') && correctNetwork ? (
 					<div className="App">
 						<h2>Get Things Done</h2>
-						<div className={statusClass}>
-							<h6>
-								<span
-									className="connected"
-									onClick={this.handleShowAccountAddress}
-								></span>Compte connecté
-
-							</h6>
-							{this.state.showAccountAddress && (
-								<p>Adresse : {accountAddress}</p>
-							)}
-							{this.state.contractAddress !== '' ? (
-								<h6><span className="connected"></span>Contrat déployé</h6>
-							) : (
-								<h6><span className="disconnected"></span>Contrat non-déployé</h6>
-							)}
-						</div>
-
-						<form>
+						<h6><em>Qui veut faire quelque chose trouve un moyen, qui ne veut rien faire trouve une excuse.</em></h6>
+						<form style={{ margin: "10px 0px" }}>
 							<TextField id="outlined-basic" label="Ajouter une tâche" variant="outlined" style={{ margin: "0px 5px" }} size="small" value={input} onChange={e => this.setState({ input: e.target.value })} />
-							<Button variant="contained" color="primary" onClick={this.addTask}>Add</Button>
+							<Button variant="contained" color="primary" onClick={this.addTask}>Ajouter</Button>
 						</form>
 						<ul>
 							{tasks.map(item =>
@@ -369,12 +381,13 @@ class App extends React.Component {
 						</ul>
 					</div>
 				) : (
-					<button
-						className='text-2xl font-bold py-3 px-12 bg-[#f1c232] rounded-lg mb-10 hover:scale-105 transition duration-500 ease-in-out'
-						onClick={this.connectWallet}
-					>
-						Connecter un portefeuille Ethereum
-					</button>
+					<div className="flex-container">
+						<button className='walletButton' onClick={this.connectWallet}>
+							<img src="/img/metamask.png" alt="MetaMask" />
+							Connecter un portefeuille Ethereum
+						</button>
+					</div>
+
 				)}
 			</div>
 		);
