@@ -23,12 +23,14 @@ class App extends React.Component {
 			input: '',
 			tasks: [],
 			correctNetwork: false,
+			connectAccount: false,
 			showStatus: true,
 			accountAddress: '',
 			showAccountAddress: false,
 			contractAddress: '',
 			showContractAddress: false,
 		};
+		this.handleConnectAccount = this.handleConnectAccount.bind(this);
 		this.toggleStatus = this.toggleStatus.bind(this);
 		this.handleShowAccountAddress = this.handleShowAccountAddress.bind(this);
 		this.handleShowContractAddress = this.handleShowContractAddress.bind(this);
@@ -37,11 +39,34 @@ class App extends React.Component {
 	/**
 	 * Appelle des fonctions au chargement de la page
 	 */
-	componentDidMount() {
-		this.connectWalletByCookie();
-		this.handleContractAddressCookie();
-		if (this.state.accountAddress !== '') {
-			this.getAllTasks();
+	async componentDidMount() {
+		await this.retrieveContractAddress();
+		await this.retrieveAccountAddress();
+	}
+
+	/**
+	 * Récupère l'adresse du portefeuille
+	 */
+	retrieveAccountAddress = async () => {
+		await this.connectWallet()
+	}
+
+	/**
+	 * Récupère l'adresse du contrat
+	 */
+	retrieveContractAddress = async () => {
+		const contractAddress = Cookies.get('contract_address');
+		if (contractAddress === undefined || contractAddress === '') {
+			console.log('No contract address found in cookie, please deploy the contract');
+			return;
+		}
+		console.log('Found contract address by cookie (need to verify it): ', contractAddress);
+		if (await this.checkContractDeployment(contractAddress) === true) {
+			console.log('Contract address is verified at address: ', contractAddress);
+			this.setState({ contractAddress: contractAddress });
+		} else {
+			console.log('The contract address found in the cookie is not valid, please deploy the contract again (here is the cookie address): ', contractAddress);
+			this.setState({ contractAddress: '' });
 		}
 	}
 
@@ -50,74 +75,60 @@ class App extends React.Component {
 	 */
 	connectWallet = async () => {
 		try {
-			const { ethereum } = window
+			const { ethereum } = window;
 
 			if (!ethereum) {
-				console.log('Metamask not detected')
-				return
+				console.log('Metamask not detected');
+				return;
 			}
-			let chainId = await ethereum.request({ method: 'eth_chainId' })
-			console.log('Connected to chain: ' + chainId)
+			let chainId = await ethereum.request({ method: 'eth_chainId' });
+			console.log('Connected to chain: ' + chainId);
 
-			const localhostChainId = '0x539'
+			const localhostChainId = '0x539';
 
 			if (chainId !== localhostChainId) {
-				alert('You are not connected to the Localhost:8545 Testnet!')
-				return
-			} else {
-				this.setState({ correctNetwork: true });
-			}
-
-			const accounts = await ethereum.request({ method: 'eth_requestAccounts' })
-
-			this.setState({ accountAddress: accounts[0] });
-			Cookies.set('account_address', accounts[0], { expires: 7 });
-			console.log('Added account address to cookie: ', accounts[0]);
-		} catch (error) {
-			console.log('Error connecting to metamask: ', error)
-		}
-	}
-
-	/**
-	 * Connexion au portefeuille en utilisant le cookie
-	 */
-	connectWalletByCookie = async () => {
-		try {
-			const { ethereum } = window
-
-			if (!ethereum) {
-				console.log('Metamask not detected')
-				return
-			}
-
-			let chainId = await ethereum.request({ method: 'eth_chainId' })
-			// console.log('Connected to chain: ' + chainId)
-
-			const localhostChainId = '0x539'
-
-			if (chainId !== localhostChainId) {
-				alert('You are not connected to the Localhost:8545 Testnet!')
-				return
+				alert('You are not connected to the Localhost:8545 Testnet!');
+				return;
 			} else {
 				this.setState({ correctNetwork: true });
 			}
 
 			const accountAddress = Cookies.get('account_address');
 			if (accountAddress === undefined || accountAddress === '') {
-				console.log('No account address found in cookie, please connect to Metamask');
-				return;
+				if (this.state.connectAccount === true) {
+					console.log('No account address found in cookie, connecting to Metamask...');
+					const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+					this.setState({ accountAddress: accounts[0] }, () => {
+						console.log('Added account address to state: ', this.state.accountAddress);
+
+						Cookies.set('account_address', this.state.accountAddress, { expires: 7 });
+						console.log('Added account address to cookie: ', this.state.accountAddress);
+
+						this.getAllTasks(this.state.contractAddress);
+					});
+				} else {
+					return;
+				}
+			} else {
+				console.log('Found account address by cookie: ', accountAddress);
+
+				this.setState({ accountAddress: accountAddress }, () => {
+					console.log('Set account address to state: ', this.state.accountAddress);
+
+					this.getAllTasks(this.state.contractAddress);
+				});
 			}
-			console.log('Found account address by cookie: ', accountAddress);
-			this.setState({ accountAddress: accountAddress });
 		} catch (error) {
-			console.log('Error connecting to metamask: ', error)
+			console.log('Error connecting to metamask: ', error);
+			return;
 		}
 	}
 
 	/**
 	 * Récupération des tâches
 	 */
-	getAllTasks = async () => {
+	getAllTasks = async (contractAddress) => {
+		console.log('Getting all tasks linked to the account address from the contract: ', contractAddress);
 		try {
 			const { ethereum } = window
 
@@ -125,14 +136,15 @@ class App extends React.Component {
 				const provider = new ethers.providers.Web3Provider(ethereum);
 				const signer = provider.getSigner();
 				const TaskContract = new ethers.Contract(
-					this.state.contractAddress,
-					// TaskContractAddress,
+					contractAddress,
 					TaskContractAbi.abi,
 					signer
 				)
 
 				let allTasks = await TaskContract.getMyTasks();
-				this.setState({ tasks: allTasks });
+				this.setState({ tasks: allTasks }, () => {
+					console.log('Retrieved all tasks from the contract: ', this.state.tasks);
+				});
 			} else {
 				console.log("Ethereum object doesn't exist");
 			}
@@ -201,7 +213,6 @@ class App extends React.Component {
 				const signer = provider.getSigner();
 				const TaskContract = new ethers.Contract(
 					this.state.contractAddress,
-					// TaskContractAddress,
 					TaskContractAbi.abi,
 					signer
 				);
@@ -216,25 +227,6 @@ class App extends React.Component {
 			console.log(error);
 		}
 	};
-
-	/**
-	* Permet de se déconnecter du portefeuille Metamask en supprimant le cookie
-	*/
-	handleDisconnect = async () => {
-		console.log("Déconnexion du portefeuille Metamask");
-		Cookies.remove('account_address');
-		window.location.reload();
-	}
-
-	/**
-	 * Permet de changer de portefeuille Metamask en supprimant le cookie et en appelant la fonction connectWallet()
-	 */
-	handleWallet = async () => {
-		console.log("Changement de portefeuille");
-		//TODO modifier
-		this.connectWallet();
-		// window.location.reload();
-	}
 
 	/**
 	 * Permet de déployer le contrat sur la blockchain
@@ -282,7 +274,7 @@ class App extends React.Component {
 			// call a function on the contract to check if it exists at the given address
 			const name = await contract.getName();
 			console.log('Verify contract name: ', name);
-			return name == 'TaskContract';
+			return name === 'TaskContract';
 		} catch (error) {
 			console.error('Erreur lors de la vérification du déploiement du contrat', error);
 			return false;
@@ -290,48 +282,54 @@ class App extends React.Component {
 	}
 
 	/**
-	 * Gère le cookie contenant l'adresse du contrat
+	* Permet de se déconnecter du portefeuille Metamask en supprimant le cookie
+	*/
+	handleDisconnect = async () => {
+		console.log("Déconnexion du portefeuille Metamask");
+
+		this.setState({ connectAccount: false }, () => {
+			Cookies.remove('account_address');
+			window.location.reload();
+		});
+	}
+
+	/**
+	 * Permet de changer de portefeuille Metamask en supprimant le cookie et en appelant la fonction connectWallet()
 	 */
-	handleContractAddressCookie = async () => {
-		const contractAddress = Cookies.get('contract_address');
-		if (contractAddress === undefined || contractAddress === '') {
-			console.log('No contract address found in cookie, please deploy the contract');
-			return;
-		}
-		console.log('Found contract address by cookie (need to verify it): ', contractAddress);
-		if (await this.checkContractDeployment(contractAddress) == true) {
-			console.log('Contract address is verified at address: ', contractAddress);
-			this.setState({ contractAddress: contractAddress });
-		} else {
-			console.log('The contract address found in the cookie is not valid, please deploy the contract again (here is the cookie address): ', contractAddress);
-			this.setState({ contractAddress: '' });
-		}
+	handleWallet = async () => {
+		console.log("Changement de portefeuille");
+		//TODO modifier
+		// this.connectWallet();
+		// window.location.reload();
 	}
 
 	/**
 	 * Affiche ou non l'adresse du portefeuille connecté
 	 */
 	handleShowAccountAddress() {
-		this.setState({
-			showAccountAddress: !this.state.showAccountAddress
-		});
+		this.setState({ showAccountAddress: !this.state.showAccountAddress });
 	}
 
 	/**
 	 * Affiche ou non l'adresse du contrat déployé
 	 */
 	handleShowContractAddress() {
-		this.setState({
-			showContractAddress: !this.state.showContractAddress
-		});
+		this.setState({ showContractAddress: !this.state.showContractAddress });
 	}
 
 	/**
 	 * Affiche ou non le statut de la connexion au réseau Ethereum
 	 */
 	toggleStatus() {
-		this.setState({
-			showStatus: !this.state.showStatus
+		this.setState({ showStatus: !this.state.showStatus });
+	}
+
+	/**
+	 * Permet de se connecter à un portefeuille Metamask
+	 */
+	handleConnectAccount() {
+		this.setState({ connectAccount: true }, () => {
+			this.connectWallet();
 		});
 	}
 
@@ -407,7 +405,7 @@ class App extends React.Component {
 					</div>
 				) : (
 					<div className="flex-container">
-						<button className='walletButton' onClick={this.connectWallet}>
+						<button className='walletButton' onClick={this.handleConnectAccount}>
 							<img src="/img/metamask.png" alt="MetaMask" />
 							Connecter un portefeuille Ethereum
 						</button>
