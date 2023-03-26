@@ -11,11 +11,31 @@
   top: 12%;
   left: 10%;
   padding: 10px;
+  /* padding-top: 15px; */
+  padding-right: 30px;
   text-align: left;
   border-radius: 10px;
   background: rgb(220, 232, 255);
   border: 2px solid #000b4b;
   z-index: 10;
+}
+
+.status-indicator .close-popup {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  padding: 0px 5px;
+  cursor: pointer;
+  border-top-right-radius: 10px;
+  border: 2px solid black;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+  font-size: 0.75rem;
+}
+
+.status-indicator .close-popup:hover {
+  background-color: #e81123;
+  color: white;
 }
 
 .connected {
@@ -121,10 +141,12 @@ form {
   position: absolute;
   top: -2px;
   right: -2px;
-  padding: 5px 10px;
+  padding: 0px 10px;
   cursor: pointer;
   border-top-right-radius: 10px;
   border: 2px solid black;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
   font-size: 1.5rem;
 }
 

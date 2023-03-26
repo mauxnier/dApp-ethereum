@@ -116,6 +116,7 @@ class App extends React.Component {
 			} else {
 				console.log('Found account address by cookie: ', accountAddress);
 
+				this.setState({ connectAccount: true });
 				this.setState({ accountAddress: accountAddress }, () => {
 					console.log('Set account address to state: ', this.state.accountAddress);
 
@@ -295,13 +296,7 @@ class App extends React.Component {
 		console.log("Changement de portefeuille");
 
 		// fermer la popup
-		const popup = document.querySelector('.popup');
-		popup.setAttribute('hidden', true);
-
-		const closeButton = document.querySelector('.close-popup');
-		closeButton.addEventListener('click', () => {
-			this.toggleChangeWalletPopup();
-		});
+		this.closeChangeWalletPopup();
 
 		// récupérer la liste d'adresses de compte depuis le cookie
 		const accountList = this.getAccountsFromCookieList();
@@ -351,7 +346,7 @@ class App extends React.Component {
 	setSelectedAccount = (selectedAccount) => {
 		this.setSelectedAccountToCookie(selectedAccount);
 		this.setState({ accountAddress: selectedAccount }, () => {
-			this.toggleChangeWalletPopup();
+			this.closeChangeWalletPopup();
 			this.getAllTasks(this.state.contractAddress, this.state.accountAddress);
 		});
 	}
@@ -445,9 +440,17 @@ class App extends React.Component {
 	/**
 	 * Permet d'afficher la popup de changement de portefeuille
 	 */
-	toggleChangeWalletPopup = () => {
+	toggleChangeWalletPopup() {
 		const popup = document.querySelector('.popup');
 		popup.toggleAttribute('hidden');
+	}
+
+	/**
+	 * Permet de fermer la popup de changement de portefeuille
+	 */
+	closeChangeWalletPopup() {
+		const popup = document.querySelector('.popup');
+		popup.setAttribute('hidden', true);
 	}
 
 	/**
@@ -490,7 +493,7 @@ class App extends React.Component {
 					<ul id="account-list">
 						{/* Boucle pour afficher les adresses de compte depuis le cookie */}
 					</ul>
-					<button className="close-popup">X</button>
+					<button className="close-popup" onClick={this.closeChangeWalletPopup}>X</button>
 				</div>
 				<div className={statusClass}>
 					{accountAddress !== '' ? (
@@ -507,6 +510,8 @@ class App extends React.Component {
 						<h6><span className="disconnected"></span>Contrat non-déployé</h6>
 					)}
 					{showContractAddress && contractAddress !== '' && <p>Adresse : {contractAddress}</p>}
+
+					<button className="close-popup" onClick={this.toggleStatus}>X</button>
 				</div>
 				{(accountAddress !== '') && correctNetwork ? (
 					<div className="App">
