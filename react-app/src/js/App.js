@@ -4,13 +4,9 @@ import { ethers } from 'ethers';
 import { TextField, Button } from '@mui/material';
 import { Navbar, Nav } from 'react-bootstrap';
 import TaskContractAbi from '../artifacts/contracts/TaskContract.sol/TaskContract.json';
-// import { TaskContractAddress } from './config.js';
 import Task from './Task';
 import '../css/App.css';
 import '../css/TopNavbar.css';
-
-
-// const hre = require("hardhat");
 
 /**
  * Composant principal de l'application
@@ -34,12 +30,15 @@ class App extends React.Component {
 		this.toggleStatus = this.toggleStatus.bind(this);
 		this.handleShowAccountAddress = this.handleShowAccountAddress.bind(this);
 		this.handleShowContractAddress = this.handleShowContractAddress.bind(this);
+		this.getAccountsFromCookieList = this.getAccountsFromCookieList.bind(this);
 	}
 
 	/**
 	 * Appelle des fonctions au chargement de la page
 	 */
 	async componentDidMount() {
+		this.handleChangeWallet();
+
 		await this.retrieveContractAddress();
 		await this.retrieveAccountAddress();
 	}
@@ -93,7 +92,7 @@ class App extends React.Component {
 				this.setState({ correctNetwork: true });
 			}
 
-			const accountAddress = Cookies.get('account_address');
+			const accountAddress = this.getSelectedAccountFromCookie();
 			if (accountAddress === undefined || accountAddress === '') {
 				if (this.state.connectAccount === true) {
 					console.log('No account address found in cookie, connecting to Metamask...');
@@ -101,10 +100,15 @@ class App extends React.Component {
 					this.setState({ accountAddress: accounts[0] }, () => {
 						console.log('Added account address to state: ', this.state.accountAddress);
 
-						Cookies.set('account_address', this.state.accountAddress, { expires: 7 });
-						console.log('Added account address to cookie: ', this.state.accountAddress);
+						// Ajout de l'adresse du portefeuille sélectionné dans le cookie 
+						this.setSelectedAccountToCookie(this.state.accountAddress);
+						console.log('Add account address to cookie of selected account', this.state.accountAddress);
 
-						this.getAllTasks(this.state.contractAddress);
+						// Ajout de l'adresse du portefeuille dans la liste des cookies si il n'y est pas déjà
+						this.addAccountToCookieList(this.state.accountAddress);
+
+						// Récupération des tâches
+						this.getAllTasks(this.state.contractAddress, this.state.accountAddress);
 					});
 				} else {
 					return;
@@ -115,7 +119,11 @@ class App extends React.Component {
 				this.setState({ accountAddress: accountAddress }, () => {
 					console.log('Set account address to state: ', this.state.accountAddress);
 
-					this.getAllTasks(this.state.contractAddress);
+					// Ajout de l'adresse du portefeuille dans la liste des cookies si il n'y est pas déjà
+					this.addAccountToCookieList(this.state.accountAddress);
+
+					// Récupération des tâches
+					this.getAllTasks(this.state.contractAddress, this.state.accountAddress);
 				});
 			}
 		} catch (error) {
@@ -127,14 +135,14 @@ class App extends React.Component {
 	/**
 	 * Récupération des tâches
 	 */
-	getAllTasks = async (contractAddress) => {
+	getAllTasks = async (contractAddress, accountAddress) => {
 		console.log('Getting all tasks linked to the account address from the contract: ', contractAddress);
 		try {
 			const { ethereum } = window
 
 			if (ethereum) {
 				const provider = new ethers.providers.Web3Provider(ethereum);
-				const signer = provider.getSigner();
+				const signer = provider.getSigner(accountAddress);
 				const TaskContract = new ethers.Contract(
 					contractAddress,
 					TaskContractAbi.abi,
@@ -170,10 +178,9 @@ class App extends React.Component {
 
 			if (ethereum) {
 				const provider = new ethers.providers.Web3Provider(ethereum);
-				const signer = provider.getSigner();
+				const signer = provider.getSigner(this.state.accountAddress);
 				const TaskContract = new ethers.Contract(
 					this.state.contractAddress,
-					// TaskContractAddress,
 					TaskContractAbi.abi,
 					signer
 				);
@@ -210,7 +217,7 @@ class App extends React.Component {
 
 			if (ethereum) {
 				const provider = new ethers.providers.Web3Provider(ethereum);
-				const signer = provider.getSigner();
+				const signer = provider.getSigner(this.state.accountAddress);
 				const TaskContract = new ethers.Contract(
 					this.state.contractAddress,
 					TaskContractAbi.abi,
@@ -239,7 +246,7 @@ class App extends React.Component {
 		await window.ethereum.request({ method: 'eth_requestAccounts' });
 
 		// get the signer (account) from the provider
-		const signer = provider.getSigner();
+		const signer = provider.getSigner(this.state.accountAddress);
 
 		// get the contract factory
 		const contractFactory = new ethers.ContractFactory(
@@ -282,26 +289,122 @@ class App extends React.Component {
 	}
 
 	/**
+	 * Permet d'afficher la popup de changement de portefeuille
+	 */
+	toggleChangeWalletPopup = () => {
+		const popup = document.querySelector('.popup');
+		popup.removeAttribute('hidden');
+	}
+
+	/**
+	 * Permet de gérer la popup de changement de portefeuille
+	 */
+	handleChangeWallet = async () => {
+		console.log("Changement de portefeuille");
+
+		const popup = document.querySelector('.popup');
+		const closeButton = document.querySelector('.close-popup');
+
+		popup.setAttribute('hidden', true);
+
+		closeButton.addEventListener('click', () => {
+			popup.setAttribute('hidden', true);
+		});
+
+		// récupérer la liste d'adresses de compte depuis le cookie
+		const accountList = this.getAccountsFromCookieList();
+
+		// récupérer l'élément ul où les éléments li seront ajoutés
+		const accountListElement = document.getElementById('account-list');
+
+		// boucler à travers les adresses de compte et créer des éléments li
+		for (let i = 0; i < accountList.length; i++) {
+			const li = document.createElement('li');
+			const button = document.createElement('button');
+			button.textContent = accountList[i];
+			button.className = 'account-address';
+			li.appendChild(button);
+			accountListElement.appendChild(li);
+		}
+	}
+
+	/**
 	* Permet de se déconnecter du portefeuille Metamask en supprimant le cookie
 	*/
 	handleDisconnect = async () => {
 		console.log("Déconnexion du portefeuille Metamask");
 
 		this.setState({ connectAccount: false }, () => {
-			Cookies.remove('account_address');
-			window.location.reload();
+			this.removeSelectedCookie();
+			// this.removeAccountFromCookieList(this.state.accountAddress);
+			this.setState({ accountAddress: '' });
 		});
 	}
 
 	/**
-	 * Permet de changer de portefeuille Metamask en supprimant le cookie et en appelant la fonction connectWallet()
+	 * Retourne l'adresse du portefeuille Metamask sélectionné
+	 * @returns l'adresse du portefeuille Metamask
 	 */
-	handleWallet = async () => {
-		console.log("Changement de portefeuille");
-		//TODO modifier
-		// this.connectWallet();
-		// window.location.reload();
+	getSelectedAccountFromCookie = () => {
+		const selectedAccount = Cookies.get('selected_account');
+		return selectedAccount ? selectedAccount : '';
 	}
+
+	/**
+	 * Ajoute l'adresse du portefeuille Metamask sélectionné dans le cookie
+	 * @param {*} selectedAccount portefeuille sélectionné
+	 */
+	setSelectedAccountToCookie = (selectedAccount) => {
+		Cookies.set('selected_account', selectedAccount, { expires: 7 });
+	}
+
+	/**
+	 * Supprime le cookie de l'adresse du portefeuille Metamask sélectionné
+	 */
+	removeSelectedCookie = () => {
+		Cookies.remove('selected_account');
+	}
+
+	/**
+	 * Récupère la liste des adresses stockées dans le cookie
+	 * @returns la liste des adresses stockées dans le cookie
+	 */
+	getAccountsFromCookieList = () => {
+		const accountListJSON = Cookies.get('account_addresses');
+		const accountList = accountListJSON ? JSON.parse(accountListJSON) : [];
+
+		return accountList.map(account => account.toString());
+	};
+
+	/**
+	 * Ajoute une adresse à la liste des adresses stockées dans le cookie
+	 * @param {*} address l'adresse à ajouter
+	 */
+	addAccountToCookieList = (accountAddress) => {
+		const accountListJSON = Cookies.get('account_addresses');
+		const accountList = accountListJSON ? JSON.parse(accountListJSON) : [];
+
+		if (!accountList.includes(accountAddress)) {
+			accountList.push(accountAddress);
+			Cookies.set('account_addresses', JSON.stringify(accountList));
+			console.log('Added account address to cookie list: ', this.state.accountAddress);
+		}
+	};
+
+	/**
+	 * Supprime une adresse de la liste des adresses stockées dans le cookie
+	 * @param {*} accountAddress l'adresse à supprimer
+	 */
+	removeAccountFromCookieList = (accountAddress) => {
+		const accountListJSON = Cookies.get('account_addresses');
+		const accountList = accountListJSON ? JSON.parse(accountListJSON) : [];
+
+		const index = accountList.indexOf(accountAddress);
+		if (index > -1) {
+			accountList.splice(index, 1);
+			Cookies.set('account_addresses', JSON.stringify(accountList));
+		}
+	};
 
 	/**
 	 * Affiche ou non l'adresse du portefeuille connecté
@@ -340,6 +443,7 @@ class App extends React.Component {
 	render() {
 		const { input, tasks, correctNetwork, accountAddress, contractAddress } = this.state;
 		const statusClass = this.state.showStatus ? "status-indicator" : "status-indicator hidden";
+
 		return (
 			<div>
 				<Navbar collapseOnSelect expand="lg" className="top-nav">
@@ -353,19 +457,21 @@ class App extends React.Component {
 							<Nav>
 								<Nav.Link onClick={this.toggleStatus}>Afficher le statut</Nav.Link>
 								<Nav.Link onClick={this.deployContract}>Déployer le contrat</Nav.Link>
-								<Nav.Link onClick={this.handleWallet}>Changer de portefeuille</Nav.Link>
+								<Nav.Link onClick={this.toggleChangeWalletPopup}>Changer de portefeuille</Nav.Link>
+								{/* <Nav.Link onClick={this.connectWallet}>Connexion</Nav.Link> */}
 								<Nav.Link onClick={this.handleDisconnect}>Déconnexion</Nav.Link>
-								{/* <NavDropdown title="Dropdown" id="collasible-nav-dropdown">
-											<NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
-											<NavDropdown.Item href="">Another action</NavDropdown.Item>
-											<NavDropdown.Item href="#action/3.3">Something</NavDropdown.Item>
-											<NavDropdown.Divider />
-											<NavDropdown.Item href="">Separated link</NavDropdown.Item>
-										</NavDropdown> */}
 							</Nav>
 						</Navbar.Collapse>
 					</div>
 				</Navbar>
+				<div className="popup">
+					<h2>Choisir un compte</h2>
+					<p>Choisissez un compte dans la liste ci-dessous :</p>
+					<ul id="account-list">
+						{/* Boucle pour afficher les adresses de compte depuis le cookie */}
+					</ul>
+					<button className="close-popup">X</button>
+				</div>
 				<div className={statusClass}>
 					{this.state.accountAddress !== '' ? (
 						<h6><span className="connected" onClick={this.handleShowAccountAddress}></span>Compte connecté</h6>
@@ -389,7 +495,7 @@ class App extends React.Component {
 					<div className="App">
 						<h2>Get Things Done</h2>
 						<h6><em>Qui veut faire quelque chose trouve un moyen, qui ne veut rien faire trouve une excuse.</em></h6>
-						<form style={{ margin: "10px 0px" }}>
+						<form>
 							<TextField id="outlined-basic" label="Ajouter une tâche" variant="outlined" style={{ margin: "0px 5px" }} size="small" value={input} onChange={e => this.setState({ input: e.target.value })} />
 							<Button variant="contained" color="primary" onClick={this.addTask}>Ajouter</Button>
 						</form>
