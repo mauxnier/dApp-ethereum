@@ -78,54 +78,57 @@ class App extends React.Component {
 
 			if (!ethereum) {
 				console.log('Metamask not detected');
-				return;
-			}
-			let chainId = await ethereum.request({ method: 'eth_chainId' });
-			console.log('Connected to chain: ' + chainId);
-
-			const localhostChainId = '0x539';
-
-			if (chainId !== localhostChainId) {
-				alert('You are not connected to the Localhost:8545 Testnet!');
+				alert('Metamask not detected');
 				return;
 			} else {
-				this.setState({ correctNetwork: true });
-			}
+				let chainId = await ethereum.request({ method: 'eth_chainId' });
+				console.log('Connected to chain: ' + chainId);
 
-			const accountAddress = this.getSelectedAccountFromCookie();
-			if (accountAddress === undefined || accountAddress === '') {
-				if (this.state.connectAccount === true) {
-					console.log('No account address found in cookie, connecting to Metamask...');
-					const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-					this.setState({ accountAddress: accounts[0] }, () => {
-						console.log('Added account address to state: ', this.state.accountAddress);
+				const localhostChainId = '0x539';
 
-						// Ajout de l'adresse du portefeuille sélectionné dans le cookie et récupération des tâches
-						this.setSelectedAccountToCookie(this.state.accountAddress);
-						console.log('Add account address to cookie of selected account', this.state.accountAddress);
-
-						// Ajout de l'adresse du portefeuille dans la liste des cookies si il n'y est pas déjà
-						this.addAccountToCookieList(this.state.accountAddress);
-
-						// Récupération des tâches
-						this.getAllTasks(this.state.contractAddress, this.state.accountAddress);
-					});
-				} else {
+				if (chainId !== localhostChainId) {
+					await this.handleDisconnect();
+					alert('You are not connected to the Localhost:8545 Testnet!');
 					return;
+				} else {
+					this.setState({ correctNetwork: true });
+
+					const accountAddress = this.getSelectedAccountFromCookie();
+					if (accountAddress === undefined || accountAddress === '') {
+						if (this.state.connectAccount === true) {
+							console.log('No account address found in cookie, connecting to Metamask...');
+							const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+							this.setState({ accountAddress: accounts[0] }, () => {
+								console.log('Added account address to state: ', this.state.accountAddress);
+
+								// Ajout de l'adresse du portefeuille sélectionné dans le cookie et récupération des tâches
+								this.setSelectedAccountToCookie(this.state.accountAddress);
+								console.log('Add account address to cookie of selected account', this.state.accountAddress);
+
+								// Ajout de l'adresse du portefeuille dans la liste des cookies si il n'y est pas déjà
+								this.addAccountToCookieList(this.state.accountAddress);
+
+								// Récupération des tâches
+								this.getAllTasks(this.state.contractAddress, this.state.accountAddress);
+							});
+						} else {
+							return;
+						}
+					} else {
+						console.log('Found account address by cookie: ', accountAddress);
+
+						this.setState({ connectAccount: true });
+						this.setState({ accountAddress: accountAddress }, () => {
+							console.log('Set account address to state: ', this.state.accountAddress);
+
+							// Ajout de l'adresse du portefeuille dans la liste des cookies si il n'y est pas déjà
+							this.addAccountToCookieList(this.state.accountAddress);
+
+							// Récupération des tâches
+							this.getAllTasks(this.state.contractAddress, this.state.accountAddress);
+						});
+					}
 				}
-			} else {
-				console.log('Found account address by cookie: ', accountAddress);
-
-				this.setState({ connectAccount: true });
-				this.setState({ accountAddress: accountAddress }, () => {
-					console.log('Set account address to state: ', this.state.accountAddress);
-
-					// Ajout de l'adresse du portefeuille dans la liste des cookies si il n'y est pas déjà
-					this.addAccountToCookieList(this.state.accountAddress);
-
-					// Récupération des tâches
-					this.getAllTasks(this.state.contractAddress, this.state.accountAddress);
-				});
 			}
 		} catch (error) {
 			console.log('Error connecting to metamask: ', error);
@@ -321,12 +324,12 @@ class App extends React.Component {
 	* Permet de se déconnecter du portefeuille Metamask en supprimant le cookie
 	*/
 	handleDisconnect = async () => {
-		console.log("Déconnexion du portefeuille Metamask");
-
 		this.setState({ connectAccount: false }, () => {
 			this.removeSelectedAccountCookie();
 			// this.removeAccountFromCookieList(this.state.accountAddress);
-			this.setState({ accountAddress: '' });
+			this.setState({ accountAddress: '' }, () => {
+				console.log("Déconnexion du portefeuille Metamask");
+			});
 		});
 	}
 
