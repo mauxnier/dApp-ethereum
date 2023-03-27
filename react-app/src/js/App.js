@@ -475,7 +475,6 @@ class App extends React.Component {
 								<Nav.Link onClick={this.toggleStatus}>Afficher le statut</Nav.Link>
 								{connectAccount ? (
 									<>
-										<Nav.Link onClick={this.toggleStatus}>Afficher le statut</Nav.Link>
 										<Nav.Link onClick={this.deployContract}>Déployer le contrat</Nav.Link>
 										<Nav.Link onClick={this.toggleChangeWalletPopup}>Changer de portefeuille</Nav.Link>
 										<Nav.Link onClick={this.handleDisconnect}>Déconnexion</Nav.Link>
