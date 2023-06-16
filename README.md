@@ -1,5 +1,7 @@
 # Todo List DApp : Get Things Done 📝
 
+ Utilisation de Solidity et ReactJS.
+
 ## Aperçu 👀
 
 <p align="center">
